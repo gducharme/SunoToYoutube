@@ -1,0 +1,13 @@
+[project]
+name = "suno-to-youtube"
+version = "0.1.0"
+description = "Automation tools for copying Suno songs to YouTube"
+requires-python = ">=3.10"
+dependencies = [
+    "requests",
+    "google-api-python-client",
+]
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
