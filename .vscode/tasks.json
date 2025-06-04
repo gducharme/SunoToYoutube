@@ -38,6 +38,13 @@
             "command": "bash",
             "args": ["-c", "git branch --merged main | egrep -v '^(\\*|main)$' | xargs -r git branch -d"],
             "problemMatcher": [],
+        },
+        {
+            "label": "Run Tests",
+            "type": "shell",
+            "command": "pytest",
+            "group": "test",
+
             "presentation": { "reveal": "always" }
         }
     ],
