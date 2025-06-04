@@ -7,6 +7,17 @@ stores information about them in a local SQLite database. Authentication uses
 environment variables `SUNO_API_KEY` and `YOUTUBE_API_KEY` or can be passed on
 the command line.
 
+## Setup
+
+Install [uv](https://github.com/astral-sh/uv) and use it to create a virtual
+environment and install the project:
+
+```bash
+uv venv
+source .venv/bin/activate
+uv pip install -e .
+```
+
 ## Usage
 
 ```
