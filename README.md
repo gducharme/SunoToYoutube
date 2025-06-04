@@ -32,3 +32,16 @@ python -m suno_to_youtube.cli list-youtube <CHANNEL_ID> --api-key <YOUR_YT_KEY>
 ```
 
 The commands store the song details in `suno_to_youtube.db`.
+
+## VS Code Tasks
+
+A set of VS Code tasks is provided in `.vscode/tasks.json` to simplify running
+common commands. Use **Tasks: Run Task** from the command palette and select
+one of the following:
+
+- **Install dependencies** – install the project in editable mode using `uv`.
+- **List Suno Songs** – list all songs using the Suno API.
+- **List YouTube Videos** – list public videos from a channel.
+- **Scrape Suno Profile** – scrape songs from a public profile in a browser.
+
+The tasks prompt for API keys or other values when needed.
