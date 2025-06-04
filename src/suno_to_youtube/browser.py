@@ -52,8 +52,8 @@ class _Scraper:
                 self.songs[href] = ScrapedSong(title=title, url=href)
 
     def _scroll_and_wait(self, page):
-        page.keyboard.press("PageDown")
-        page.wait_for_timeout(5000)
+        page.evaluate("window.scrollBy(0, document.body.scrollHeight)")
+        page.wait_for_load_state("networkidle")
         return page.evaluate("document.body.scrollHeight")
 
     # --- main entry ----------------------------------------------------
