@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Iterable
+from pathlib import Path
 
 # Importing Playwright inside the function so that the module can be imported
 # even if Playwright is not installed. This avoids ImportError when running
@@ -27,6 +28,8 @@ def scrape_songs(profile_url: str) -> Iterable[ScrapedSong]:
     from playwright.sync_api import sync_playwright
 
     songs: dict[str, ScrapedSong] = {}
+    screenshots = Path("screenshots")
+    screenshots.mkdir(exist_ok=True)
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page()
@@ -34,7 +37,9 @@ def scrape_songs(profile_url: str) -> Iterable[ScrapedSong]:
 
         # Repeatedly scroll down and capture new songs until none appear.
         prev_count = 0
+        loop_count = 0
         while True:
+            loop_count += 1
             # Query all song links currently loaded
             anchors = page.query_selector_all("a[href*='/song/']")
             for a in anchors:
@@ -42,6 +47,14 @@ def scrape_songs(profile_url: str) -> Iterable[ScrapedSong]:
                 title = a.inner_text().strip()
                 if href and title and href not in songs:
                     songs[href] = ScrapedSong(title=title, url=href)
+
+            # Save a screenshot for debugging. Having loop count in the file name
+            # makes it easy to trace the progression during scraping.
+            page.screenshot(path=str(screenshots / f"{loop_count}_capture.png"))
+
+            # TODO: Instead of relying on a fixed timeout below, consider
+            # waiting for new elements to appear or tracking scroll height to
+            # determine when the page has finished loading new content.
 
             # Scroll a page down to trigger loading more songs
             page.evaluate("window.scrollBy(0, window.innerHeight)")
