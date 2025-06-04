@@ -24,7 +24,7 @@ uv pip install -e .
 # List Suno songs
 python -m suno_to_youtube.cli list-suno --api-key <YOUR_SUNO_TOKEN>
 
-# Scrape songs from a public Suno profile using a browser
+# Scrape songs from a public Suno profile using a browser (opens a visible window)
 python -m suno_to_youtube.cli scrape-suno https://suno.com/@wavesoflove
 
 # List YouTube videos from a channel

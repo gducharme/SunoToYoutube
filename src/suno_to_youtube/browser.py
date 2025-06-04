@@ -27,7 +27,7 @@ class _Scraper:
 
     # --- page helpers -------------------------------------------------
     def _open_page(self, p):
-        browser = p.chromium.launch()
+        browser = p.chromium.launch(headless=False)
         page = browser.new_page()
         page.goto(self.profile_url)
         self._focus_song_list(page)
@@ -82,6 +82,6 @@ class _Scraper:
 
 
 def scrape_songs(profile_url: str) -> Iterable[ScrapedSong]:
-    """Open a browser and return all songs found on the profile page."""
+    """Open a visible browser window and return all songs found on the profile page."""
     scraper = _Scraper(profile_url)
     return scraper.run()
