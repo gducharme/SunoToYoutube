@@ -33,10 +33,18 @@
             "presentation": { "reveal": "always" }
         },
         {
+            "label": "Delete merged branches",
+            "type": "shell",
+            "command": "bash",
+            "args": ["-c", "git branch --merged main | egrep -v '^(\\*|main)$' | xargs -r git branch -d"],
+            "problemMatcher": [],
+        },
+        {
             "label": "Run Tests",
             "type": "shell",
             "command": "pytest",
             "group": "test",
+
             "presentation": { "reveal": "always" }
         }
     ],
