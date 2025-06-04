@@ -16,81 +16,72 @@ class ScrapedSong:
     url: str
 
 
-def scrape_songs(profile_url: str) -> Iterable[ScrapedSong]:
-    """Open a browser and return all songs found on the profile page.
+class _Scraper:
+    """Helper implementing the scraping logic using smaller methods."""
 
-    The previous implementation scrolled once to the bottom of the page and
-    then scraped all anchors. On pages with infinite scrolling this could miss
-    songs because new entries are only loaded when the page is scrolled further
-    down.  The updated logic keeps scrolling and capturing song links until no
-    new ones are discovered.
-    """
-    from playwright.sync_api import sync_playwright
+    def __init__(self, profile_url: str) -> None:
+        self.profile_url = profile_url
+        self.songs: dict[str, ScrapedSong] = {}
+        self.screenshots = Path("screenshots")
+        self.screenshots.mkdir(exist_ok=True)
 
-    songs: dict[str, ScrapedSong] = {}
-    screenshots = Path("screenshots")
-    screenshots.mkdir(exist_ok=True)
-    with sync_playwright() as p:
+    # --- page helpers -------------------------------------------------
+    def _open_page(self, p):
         browser = p.chromium.launch()
         page = browser.new_page()
-        page.goto(profile_url)
+        page.goto(self.profile_url)
+        self._focus_song_list(page)
+        return browser, page
 
-        # Make sure the songs pane is focused. Clicking the "Songs" tab ensures
-        # that PageDown events scroll the list of songs instead of another
-        # region on the page.
+    def _focus_song_list(self, page) -> None:
+        """Ensure the list of songs is active and loaded."""
         songs_tab = page.query_selector("text=Songs")
         if songs_tab:
             songs_tab.click()
-            # Wait for the initial list of songs to finish loading after
-            # selecting the tab. Without this pause the scraper may start
-            # before any song entries have rendered and prematurely exit.
             try:
                 page.wait_for_selector("a[href*='/song/']", timeout=10000)
             except Exception:
-                # Fallback to a short delay if the selector does not appear in
-                # time. This keeps the scraper resilient even if the page
-                # structure changes slightly.
                 page.wait_for_timeout(3000)
 
-        # Repeatedly scroll down and capture new songs until none appear.  Keep
-        # track of the document height so we can detect when no new content is
-        # loaded after sending the PageDown key.
-        prev_count = 0
-        prev_height = page.evaluate("document.body.scrollHeight")
-        loop_count = 0
-        while True:
-            loop_count += 1
-            # Query all song links currently loaded
-            anchors = page.query_selector_all("a[href*='/song/']")
-            for a in anchors:
-                href = a.get_attribute("href") or ""
-                title = a.inner_text().strip()
-                if href and title and href not in songs:
-                    songs[href] = ScrapedSong(title=title, url=href)
+    def _capture_current_songs(self, page) -> None:
+        anchors = page.query_selector_all("a[href*='/song/']")
+        for a in anchors:
+            href = a.get_attribute("href") or ""
+            title = a.inner_text().strip()
+            if href and title and href not in self.songs:
+                self.songs[href] = ScrapedSong(title=title, url=href)
 
-            # Save a screenshot for debugging. Having loop count in the file name
-            # makes it easy to trace the progression during scraping.
-            page.screenshot(path=str(screenshots / f"{loop_count}_capture.png"))
+    def _scroll_and_wait(self, page):
+        page.keyboard.press("PageDown")
+        page.wait_for_timeout(5000)
+        return page.evaluate("document.body.scrollHeight")
 
-            # TODO: Waiting for a DOM mutation or network idle could provide a
-            # more robust signal that new songs have loaded instead of the fixed
-            # timeout used here.
+    # --- main entry ----------------------------------------------------
+    def run(self) -> list[ScrapedSong]:
+        from playwright.sync_api import sync_playwright
 
-            # Scroll down one page and wait for the document height to change.
-            # If the height and song count remain the same, no new songs were
-            # loaded and we are done.
-            page.keyboard.press("PageDown")
-            # Wait for the newly scrolled content to load. A longer delay
-            # reduces the chance of missing songs on slower connections.
-            page.wait_for_timeout(5000)
-            height = page.evaluate("document.body.scrollHeight")
-            if height == prev_height and len(songs) == prev_count:
-                break
-            prev_height = height
-            prev_count = len(songs)
+        with sync_playwright() as p:
+            browser, page = self._open_page(p)
 
-        # Convert dict of songs to a list for deterministic return order
-        song_list = list(songs.values())
+            prev_count = 0
+            prev_height = page.evaluate("document.body.scrollHeight")
+            loop_count = 0
 
-        browser.close()
-    return song_list
+            while True:
+                loop_count += 1
+                self._capture_current_songs(page)
+                page.screenshot(path=str(self.screenshots / f"{loop_count}_capture.png"))
+                height = self._scroll_and_wait(page)
+                if height == prev_height and len(self.songs) == prev_count:
+                    break
+                prev_height = height
+                prev_count = len(self.songs)
+
+            browser.close()
+        return list(self.songs.values())
+
+
+def scrape_songs(profile_url: str) -> Iterable[ScrapedSong]:
+    """Open a browser and return all songs found on the profile page."""
+    scraper = _Scraper(profile_url)
+    return scraper.run()
