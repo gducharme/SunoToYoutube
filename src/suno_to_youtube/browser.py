@@ -41,6 +41,16 @@ def scrape_songs(profile_url: str) -> Iterable[ScrapedSong]:
         songs_tab = page.query_selector("text=Songs")
         if songs_tab:
             songs_tab.click()
+            # Wait for the initial list of songs to finish loading after
+            # selecting the tab. Without this pause the scraper may start
+            # before any song entries have rendered and prematurely exit.
+            try:
+                page.wait_for_selector("a[href*='/song/']", timeout=10000)
+            except Exception:
+                # Fallback to a short delay if the selector does not appear in
+                # time. This keeps the scraper resilient even if the page
+                # structure changes slightly.
+                page.wait_for_timeout(3000)
 
         # Repeatedly scroll down and capture new songs until none appear.  Keep
         # track of the document height so we can detect when no new content is
