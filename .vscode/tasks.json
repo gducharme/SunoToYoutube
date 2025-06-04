@@ -31,6 +31,13 @@
             "args": ["-m", "suno_to_youtube.cli", "scrape-suno", "${input:sunoProfileUrl}"],
             "problemMatcher": [],
             "presentation": { "reveal": "always" }
+        },
+        {
+            "label": "Run Tests",
+            "type": "shell",
+            "command": "pytest",
+            "group": "test",
+            "presentation": { "reveal": "always" }
         }
     ],
     "inputs": [

@@ -43,5 +43,6 @@ one of the following:
 - **List Suno Songs** – list all songs using the Suno API.
 - **List YouTube Videos** – list public videos from a channel.
 - **Scrape Suno Profile** – scrape songs from a public profile in a browser.
+- **Run Tests** – run the project's test suite with `pytest`.
 
 The tasks prompt for API keys or other values when needed.
