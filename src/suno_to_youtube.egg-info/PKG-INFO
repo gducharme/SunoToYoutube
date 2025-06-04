@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: suno-to-youtube
+Version: 0.1.0
+Summary: Automation tools for copying Suno songs to YouTube
+Requires-Python: >=3.10
+License-File: LICENSE
+Requires-Dist: requests
+Requires-Dist: google-api-python-client
+Requires-Dist: playwright
+Dynamic: license-file
