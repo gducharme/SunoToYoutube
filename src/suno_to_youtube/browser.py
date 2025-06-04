@@ -70,7 +70,9 @@ def scrape_songs(profile_url: str) -> Iterable[ScrapedSong]:
             # If the height and song count remain the same, no new songs were
             # loaded and we are done.
             page.keyboard.press("PageDown")
-            page.wait_for_timeout(1000)
+            # Wait for the newly scrolled content to load. A longer delay
+            # reduces the chance of missing songs on slower connections.
+            page.wait_for_timeout(5000)
             height = page.evaluate("document.body.scrollHeight")
             if height == prev_height and len(songs) == prev_count:
                 break
