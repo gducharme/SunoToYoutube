@@ -31,6 +31,14 @@
             "args": ["-m", "suno_to_youtube.cli", "scrape-suno", "${input:sunoProfileUrl}"],
             "problemMatcher": [],
             "presentation": { "reveal": "always" }
+        },
+        {
+            "label": "Delete merged branches",
+            "type": "shell",
+            "command": "bash",
+            "args": ["-c", "git branch --merged main | egrep -v '^(\\*|main)$' | xargs -r git branch -d"],
+            "problemMatcher": [],
+            "presentation": { "reveal": "always" }
         }
     ],
     "inputs": [
