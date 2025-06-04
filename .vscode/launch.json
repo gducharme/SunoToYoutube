@@ -12,6 +12,13 @@
                 "${input:sunoApiKey}"
             ],
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Run Tests",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "console": "integratedTerminal"
         }
     ],
     "inputs": [
