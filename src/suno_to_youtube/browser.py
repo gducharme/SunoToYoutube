@@ -16,33 +16,43 @@ class ScrapedSong:
 
 
 def scrape_songs(profile_url: str) -> Iterable[ScrapedSong]:
-    """Open a browser, scroll the page and return the discovered songs."""
+    """Open a browser and return all songs found on the profile page.
+
+    The previous implementation scrolled once to the bottom of the page and
+    then scraped all anchors. On pages with infinite scrolling this could miss
+    songs because new entries are only loaded when the page is scrolled further
+    down.  The updated logic keeps scrolling and capturing song links until no
+    new ones are discovered.
+    """
     from playwright.sync_api import sync_playwright
 
-    songs: list[ScrapedSong] = []
+    songs: dict[str, ScrapedSong] = {}
     with sync_playwright() as p:
         browser = p.chromium.launch()
         page = browser.new_page()
         page.goto(profile_url)
 
-        # Scroll down until the page height no longer changes
-        prev_height = 0
+        # Repeatedly scroll down and capture new songs until none appear.
+        prev_count = 0
         while True:
-            page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-            page.wait_for_timeout(1000)
-            height = page.evaluate("document.body.scrollHeight")
-            if height == prev_height:
-                break
-            prev_height = height
+            # Query all song links currently loaded
+            anchors = page.query_selector_all("a[href*='/song/"]")
+            for a in anchors:
+                href = a.get_attribute("href") or ""
+                title = a.inner_text().strip()
+                if href and title and href not in songs:
+                    songs[href] = ScrapedSong(title=title, url=href)
 
-        # Extract song titles and URLs. The selectors may need to be updated if
-        # Suno changes their markup.
-        anchors = page.query_selector_all("a[href*='/song/']")
-        for a in anchors:
-            href = a.get_attribute("href") or ""
-            title = a.inner_text().strip()
-            if href and title:
-                songs.append(ScrapedSong(title=title, url=href))
+            # Scroll a page down to trigger loading more songs
+            page.evaluate("window.scrollBy(0, window.innerHeight)")
+            page.wait_for_timeout(1000)
+
+            if len(songs) == prev_count:
+                break
+            prev_count = len(songs)
+
+        # Convert dict of songs to a list for deterministic return order
+        song_list = list(songs.values())
 
         browser.close()
-    return songs
+    return song_list
