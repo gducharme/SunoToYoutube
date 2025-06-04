@@ -1,0 +1,58 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Install dependencies",
+            "type": "shell",
+            "command": "uv",
+            "args": ["pip", "install", "-e", "."],
+            "group": "build"
+        },
+        {
+            "label": "List Suno Songs",
+            "type": "shell",
+            "command": "python",
+            "args": ["-m", "suno_to_youtube.cli", "list-suno", "--api-key", "${input:sunoApiKey}"],
+            "problemMatcher": [],
+            "presentation": { "reveal": "always" }
+        },
+        {
+            "label": "List YouTube Videos",
+            "type": "shell",
+            "command": "python",
+            "args": ["-m", "suno_to_youtube.cli", "list-youtube", "${input:channelId}", "--api-key", "${input:youtubeApiKey}"],
+            "problemMatcher": [],
+            "presentation": { "reveal": "always" }
+        },
+        {
+            "label": "Scrape Suno Profile",
+            "type": "shell",
+            "command": "python",
+            "args": ["-m", "suno_to_youtube.cli", "scrape-suno", "${input:sunoProfileUrl}"],
+            "problemMatcher": [],
+            "presentation": { "reveal": "always" }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "sunoApiKey",
+            "type": "promptString",
+            "description": "Suno API key"
+        },
+        {
+            "id": "youtubeApiKey",
+            "type": "promptString",
+            "description": "YouTube API key"
+        },
+        {
+            "id": "channelId",
+            "type": "promptString",
+            "description": "YouTube channel ID"
+        },
+        {
+            "id": "sunoProfileUrl",
+            "type": "promptString",
+            "description": "URL to Suno profile"
+        }
+    ]
+}
