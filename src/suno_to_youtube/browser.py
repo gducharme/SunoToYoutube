@@ -36,7 +36,7 @@ def scrape_songs(profile_url: str) -> Iterable[ScrapedSong]:
         prev_count = 0
         while True:
             # Query all song links currently loaded
-            anchors = page.query_selector_all("a[href*='/song/"]")
+            anchors = page.query_selector_all("a[href*='/song/']")
             for a in anchors:
                 href = a.get_attribute("href") or ""
                 title = a.inner_text().strip()
