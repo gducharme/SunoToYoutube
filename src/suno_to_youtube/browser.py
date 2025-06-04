@@ -35,8 +35,18 @@ def scrape_songs(profile_url: str) -> Iterable[ScrapedSong]:
         page = browser.new_page()
         page.goto(profile_url)
 
-        # Repeatedly scroll down and capture new songs until none appear.
+        # Make sure the songs pane is focused. Clicking the "Songs" tab ensures
+        # that PageDown events scroll the list of songs instead of another
+        # region on the page.
+        songs_tab = page.query_selector("text=Songs")
+        if songs_tab:
+            songs_tab.click()
+
+        # Repeatedly scroll down and capture new songs until none appear.  Keep
+        # track of the document height so we can detect when no new content is
+        # loaded after sending the PageDown key.
         prev_count = 0
+        prev_height = page.evaluate("document.body.scrollHeight")
         loop_count = 0
         while True:
             loop_count += 1
@@ -52,16 +62,19 @@ def scrape_songs(profile_url: str) -> Iterable[ScrapedSong]:
             # makes it easy to trace the progression during scraping.
             page.screenshot(path=str(screenshots / f"{loop_count}_capture.png"))
 
-            # TODO: Instead of relying on a fixed timeout below, consider
-            # waiting for new elements to appear or tracking scroll height to
-            # determine when the page has finished loading new content.
+            # TODO: Waiting for a DOM mutation or network idle could provide a
+            # more robust signal that new songs have loaded instead of the fixed
+            # timeout used here.
 
-            # Scroll a page down to trigger loading more songs
-            page.evaluate("window.scrollBy(0, window.innerHeight)")
+            # Scroll down one page and wait for the document height to change.
+            # If the height and song count remain the same, no new songs were
+            # loaded and we are done.
+            page.keyboard.press("PageDown")
             page.wait_for_timeout(1000)
-
-            if len(songs) == prev_count:
+            height = page.evaluate("document.body.scrollHeight")
+            if height == prev_height and len(songs) == prev_count:
                 break
+            prev_height = height
             prev_count = len(songs)
 
         # Convert dict of songs to a list for deterministic return order
