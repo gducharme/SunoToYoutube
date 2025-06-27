@@ -8,6 +8,7 @@ from .database import Database, Song
 from .suno_api import list_public_songs
 from .youtube_api import list_channel_videos
 from .browser import scrape_songs, ScrapedSong
+from .timer import process_clock
 
 
 def print_songs(songs: Iterable[Song]) -> None:
@@ -16,35 +17,38 @@ def print_songs(songs: Iterable[Song]) -> None:
 
 
 def cmd_list_suno(args: argparse.Namespace) -> None:
-    db = Database()
-    songs = list_public_songs(api_key=args.api_key)
-    for suno_song in songs:
-        song = Song(platform="suno", platform_id=suno_song.id, title=suno_song.title)
-        db.add_song(song)
-    print_songs(db.list_songs(platform="suno"))
-    db.close()
+    with process_clock("list-suno"):
+        db = Database()
+        songs = list_public_songs(api_key=args.api_key)
+        for suno_song in songs:
+            song = Song(platform="suno", platform_id=suno_song.id, title=suno_song.title)
+            db.add_song(song)
+        print_songs(db.list_songs(platform="suno"))
+        db.close()
 
 
 def cmd_list_youtube(args: argparse.Namespace) -> None:
-    db = Database()
-    videos = list_channel_videos(args.channel_id, api_key=args.api_key)
-    for video in videos:
-        song = Song(platform="youtube", platform_id=video.id, title=video.title)
-        db.add_song(song)
-    print_songs(db.list_songs(platform="youtube"))
-    db.close()
+    with process_clock("list-youtube"):
+        db = Database()
+        videos = list_channel_videos(args.channel_id, api_key=args.api_key)
+        for video in videos:
+            song = Song(platform="youtube", platform_id=video.id, title=video.title)
+            db.add_song(song)
+        print_songs(db.list_songs(platform="youtube"))
+        db.close()
 
 
 def cmd_scrape_suno(args: argparse.Namespace) -> None:
     """Scrape songs from a public Suno profile using a browser."""
-    db = Database()
-    scraped = scrape_songs(args.url)
-    for item in scraped:
-        # use the song URL as platform_id to ensure uniqueness
-        song = Song(platform="suno", platform_id=item.url, title=item.title)
-        db.add_song(song)
-    print_songs(db.list_songs(platform="suno"))
-    db.close()
+    with process_clock("scrape-suno"):
+        db = Database()
+        scraped = scrape_songs(args.url)
+        for item in scraped:
+            # use the song URL as platform_id to ensure uniqueness
+            song = Song(platform="suno", platform_id=item.url, title=item.title)
+            db.add_song(song)
+        print_songs(db.list_songs(platform="suno"))
+        db.close()
 
 
 def main(argv: list[str] | None = None) -> None:
